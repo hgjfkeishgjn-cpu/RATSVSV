@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Trading Signals SaaS API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: signals
+    description: AI trading signal operations
+  - name: watchlist
+    description: Watchlist management
+  - name: portfolio
+    description: Portfolio tracking
+  - name: subscription
+    description: Subscription management
+  - name: market
+    description: Market data and prices
+  - name: alerts
+    description: Price and signal alerts
 paths:
   /healthz:
     get:
@@ -24,6 +36,376 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /signals:
+    get:
+      operationId: listSignals
+      tags: [signals]
+      summary: List AI trading signals
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+          description: Filter by ticker symbol
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL, HOLD]
+          description: Filter by signal action
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 4h, 1d]
+          description: Filter by timeframe
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: List of signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Signal"
+    post:
+      operationId: generateSignal
+      tags: [signals]
+      summary: Generate AI signal for a symbol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignalRequest"
+      responses:
+        "201":
+          description: Generated signal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Signal"
+
+  /signals/{id}:
+    get:
+      operationId: getSignal
+      tags: [signals]
+      summary: Get a specific signal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Signal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Signal"
+        "404":
+          description: Not found
+
+  /signals/dashboard/summary:
+    get:
+      operationId: getSignalSummary
+      tags: [signals]
+      summary: Dashboard summary stats
+      responses:
+        "200":
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignalSummary"
+
+  /signals/recent/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [signals]
+      summary: Recent signal activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Signal"
+
+  /signals/top/performers:
+    get:
+      operationId: getTopPerformers
+      tags: [signals]
+      summary: Top performing signals by confidence
+      responses:
+        "200":
+          description: Top performers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Signal"
+
+  /watchlist:
+    get:
+      operationId: listWatchlist
+      tags: [watchlist]
+      summary: Get user watchlist
+      responses:
+        "200":
+          description: Watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+    post:
+      operationId: addToWatchlist
+      tags: [watchlist]
+      summary: Add symbol to watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistInput"
+      responses:
+        "201":
+          description: Added item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+
+  /watchlist/{id}:
+    delete:
+      operationId: removeFromWatchlist
+      tags: [watchlist]
+      summary: Remove symbol from watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  /portfolio:
+    get:
+      operationId: listPortfolio
+      tags: [portfolio]
+      summary: Get portfolio positions
+      responses:
+        "200":
+          description: Portfolio positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Position"
+    post:
+      operationId: addPosition
+      tags: [portfolio]
+      summary: Add or update a portfolio position
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PositionInput"
+      responses:
+        "201":
+          description: Position
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Position"
+
+  /portfolio/{id}:
+    patch:
+      operationId: updatePosition
+      tags: [portfolio]
+      summary: Update a position
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PositionUpdate"
+      responses:
+        "200":
+          description: Updated position
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Position"
+    delete:
+      operationId: deletePosition
+      tags: [portfolio]
+      summary: Remove a position
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /portfolio/stats/summary:
+    get:
+      operationId: getPortfolioStats
+      tags: [portfolio]
+      summary: Portfolio performance stats
+      responses:
+        "200":
+          description: Portfolio stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioStats"
+
+  /market/prices:
+    get:
+      operationId: getMarketPrices
+      tags: [market]
+      summary: Get current prices for symbols
+      parameters:
+        - name: symbols
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of symbols (e.g. BTC,ETH,AAPL)
+      responses:
+        "200":
+          description: Price data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceData"
+
+  /market/trending:
+    get:
+      operationId: getTrendingAssets
+      tags: [market]
+      summary: Get trending assets with momentum
+      responses:
+        "200":
+          description: Trending assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendingAsset"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List user alerts
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create a price or signal alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertInput"
+      responses:
+        "201":
+          description: Created alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}:
+    delete:
+      operationId: deleteAlert
+      tags: [alerts]
+      summary: Delete an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /subscription:
+    get:
+      operationId: getSubscription
+      tags: [subscription]
+      summary: Get current user subscription
+      responses:
+        "200":
+          description: Subscription info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: upsertSubscription
+      tags: [subscription]
+      summary: Create or upgrade subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionInput"
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +416,269 @@ components:
       required:
         - status
 
+    Signal:
+      type: object
+      required: [id, symbol, action, confidence, reasoning, timeframe, entryPrice, targetPrice, stopLoss, createdAt]
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        action:
+          type: string
+          enum: [BUY, SELL, HOLD]
+        confidence:
+          type: number
+          description: Confidence score 0-100
+        reasoning:
+          type: string
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 4h, 1d]
+        entryPrice:
+          type: number
+        targetPrice:
+          type: number
+        stopLoss:
+          type: number
+        riskRewardRatio:
+          type: ["number", "null"]
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+        userId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    SignalRequest:
+      type: object
+      required: [symbol, timeframe]
+      properties:
+        symbol:
+          type: string
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 4h, 1d]
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+
+    SignalSummary:
+      type: object
+      required: [totalSignals, buyCount, sellCount, holdCount, avgConfidence, winRate]
+      properties:
+        totalSignals:
+          type: integer
+        buyCount:
+          type: integer
+        sellCount:
+          type: integer
+        holdCount:
+          type: integer
+        avgConfidence:
+          type: number
+        winRate:
+          type: number
+
+    WatchlistItem:
+      type: object
+      required: [id, symbol, assetClass, createdAt]
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+        notes:
+          type: ["string", "null"]
+        userId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    WatchlistInput:
+      type: object
+      required: [symbol, assetClass]
+      properties:
+        symbol:
+          type: string
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+        notes:
+          type: string
+
+    Position:
+      type: object
+      required: [id, symbol, assetClass, quantity, avgEntryPrice, createdAt]
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+        quantity:
+          type: number
+        avgEntryPrice:
+          type: number
+        currentPrice:
+          type: ["number", "null"]
+        pnl:
+          type: ["number", "null"]
+        pnlPercent:
+          type: ["number", "null"]
+        userId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    PositionInput:
+      type: object
+      required: [symbol, assetClass, quantity, avgEntryPrice]
+      properties:
+        symbol:
+          type: string
+        assetClass:
+          type: string
+          enum: [crypto, stocks, forex, commodities]
+        quantity:
+          type: number
+        avgEntryPrice:
+          type: number
+
+    PositionUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+        avgEntryPrice:
+          type: number
+        currentPrice:
+          type: number
+
+    PortfolioStats:
+      type: object
+      required: [totalPositions, totalValue, totalPnl, totalPnlPercent, bestPerformer, worstPerformer]
+      properties:
+        totalPositions:
+          type: integer
+        totalValue:
+          type: number
+        totalPnl:
+          type: number
+        totalPnlPercent:
+          type: number
+        bestPerformer:
+          type: ["string", "null"]
+        worstPerformer:
+          type: ["string", "null"]
+
+    PriceData:
+      type: object
+      required: [symbol, price, change24h, changePercent24h, volume24h]
+      properties:
+        symbol:
+          type: string
+        price:
+          type: number
+        change24h:
+          type: number
+        changePercent24h:
+          type: number
+        volume24h:
+          type: number
+        high24h:
+          type: ["number", "null"]
+        low24h:
+          type: ["number", "null"]
+
+    TrendingAsset:
+      type: object
+      required: [symbol, assetClass, momentum, signalCount, latestAction]
+      properties:
+        symbol:
+          type: string
+        assetClass:
+          type: string
+        momentum:
+          type: number
+        signalCount:
+          type: integer
+        latestAction:
+          type: string
+          enum: [BUY, SELL, HOLD]
+
+    Alert:
+      type: object
+      required: [id, symbol, alertType, threshold, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        alertType:
+          type: string
+          enum: [price_above, price_below, signal_buy, signal_sell]
+        threshold:
+          type: ["number", "null"]
+        isActive:
+          type: boolean
+        userId:
+          type: ["string", "null"]
+        triggeredAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AlertInput:
+      type: object
+      required: [symbol, alertType]
+      properties:
+        symbol:
+          type: string
+        alertType:
+          type: string
+          enum: [price_above, price_below, signal_buy, signal_sell]
+        threshold:
+          type: number
+
+    Subscription:
+      type: object
+      required: [id, plan, status, createdAt]
+      properties:
+        id:
+          type: integer
+        plan:
+          type: string
+          enum: [free, pro, premium]
+        status:
+          type: string
+          enum: [active, cancelled, expired]
+        signalsPerDay:
+          type: integer
+        userId:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    SubscriptionInput:
+      type: object
+      required: [plan]
+      properties:
+        plan:
+          type: string
+          enum: [free, pro, premium]
