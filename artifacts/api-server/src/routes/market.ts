@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, signalsTable } from "@workspace/db";
 import { desc, count } from "drizzle-orm";
 import { GetMarketPricesQueryParams } from "@workspace/api-zod";
-import { getSimulatedPrice, getKnownSymbols } from "../lib/marketData";
+import { getLivePrices, getLivePrice, getKnownSymbols } from "../lib/marketData";
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get("/market/prices", async (req, res): Promise<void> => {
     return;
   }
   const symbols = parsed.data.symbols.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-  const prices = symbols.map(symbol => ({ symbol, ...getSimulatedPrice(symbol) }));
+  const prices = await getLivePrices(symbols);
   res.json(prices);
 });
 
@@ -31,12 +31,15 @@ router.get("/market/trending", async (_req, res): Promise<void> => {
     symbolMap[s.symbol].count += Number(s.cnt);
   }
 
-  const trending = known.map(symbol => {
-    const data = getSimulatedPrice(symbol);
+  const priceData = await getLivePrices(known);
+
+  const trending = priceData.map(data => {
+    const symbol = data.symbol;
     const sigData = symbolMap[symbol] ?? { count: 0, latestAction: "HOLD" as const };
     const assetClass = ["BTC","ETH","SOL","BNB","XRP"].includes(symbol) ? "crypto"
       : ["AAPL","TSLA","NVDA","MSFT","GOOGL"].includes(symbol) ? "stocks"
-      : ["EURUSD","GBPUSD","USDJPY","AUDUSD"].includes(symbol) ? "forex"
+      : ["EURUSD","GBPUSD","USDJPY","AUDUSD","USDCAD"].includes(symbol) ? "forex"
+      : ["NASDAQ","SP500","DOW"].includes(symbol) ? "indices"
       : "commodities";
     return {
       symbol,
