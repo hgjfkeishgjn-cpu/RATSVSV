@@ -1,0 +1,144 @@
+import { Link, useLocation } from "wouter";
+import { Show, useClerk, useUser } from "@clerk/react";
+import { 
+  LayoutDashboard, 
+  Activity, 
+  LineChart, 
+  Briefcase, 
+  Globe, 
+  Bell, 
+  CreditCard,
+  LogOut,
+  Menu
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/signals", label: "Signals", icon: Activity },
+  { href: "/watchlist", label: "Watchlist", icon: LineChart },
+  { href: "/portfolio", label: "Portfolio", icon: Briefcase },
+  { href: "/market", label: "Market", icon: Globe },
+  { href: "/alerts", label: "Alerts", icon: Bell },
+  { href: "/pricing", label: "Pricing", icon: CreditCard },
+];
+
+function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }) {
+  const [location] = useLocation();
+  const { signOut } = useClerk();
+  const { user } = useUser();
+
+  const handleSignOut = () => {
+    signOut({ redirectUrl: import.meta.env.BASE_URL.replace(/\/$/, "") || "/" });
+  };
+
+  const content = (
+    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <div className="flex h-14 items-center px-4 border-b border-sidebar-border">
+        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg" onClick={onClose}>
+          <Activity className="h-6 w-6 text-primary" />
+          <span>AlphaSignal</span>
+        </Link>
+      </div>
+
+      <div className="flex-1 overflow-auto py-4">
+        <nav className="space-y-1 px-2">
+          {navItems.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link 
+                key={item.href} 
+                href={item.href}
+                onClick={onClose}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  isActive 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                }`}
+                data-testid={`nav-${item.label.toLowerCase()}`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <Show when="signed-in">
+        <div className="p-4 border-t border-sidebar-border">
+          <div className="flex items-center gap-3 mb-4">
+            <Avatar className="h-9 w-9 border border-sidebar-border">
+              <AvatarImage src={user?.imageUrl} />
+              <AvatarFallback>{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <span className="text-sm font-medium truncate">{user?.fullName || user?.primaryEmailAddress?.emailAddress}</span>
+              <span className="text-xs text-muted-foreground truncate">Pro Plan</span>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full justify-start text-sidebar-foreground hover:text-sidebar-foreground border-sidebar-border bg-transparent hover:bg-sidebar-accent" 
+            onClick={handleSignOut}
+            data-testid="button-signout"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+      </Show>
+      
+      <Show when="signed-out">
+        <div className="p-4 border-t border-sidebar-border space-y-2">
+          <Button asChild className="w-full" variant="default" data-testid="button-signin-nav">
+            <Link href="/sign-in">Sign In</Link>
+          </Button>
+          <Button asChild className="w-full" variant="outline" data-testid="button-signup-nav">
+            <Link href="/sign-up">Sign Up</Link>
+          </Button>
+        </div>
+      </Show>
+    </div>
+  );
+
+  if (mobile) return content;
+  return <div className="hidden md:flex md:w-64 md:flex-col fixed inset-y-0">{content}</div>;
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      
+      <div className="md:pl-64 flex flex-col min-h-screen">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="shrink-0 md:hidden" data-testid="button-mobile-menu">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72 border-r-0">
+              <Sidebar mobile onClose={() => setIsOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <div className="flex items-center gap-2 font-bold">
+            <Activity className="h-5 w-5 text-primary" />
+            <span>AlphaSignal</span>
+          </div>
+        </header>
+        
+        <main className="flex-1 p-4 md:p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

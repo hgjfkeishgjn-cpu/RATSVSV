@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type GetMarketPricesParams = {
+/**
+ * Comma-separated list of symbols (e.g. BTC,ETH,AAPL)
+ */
+symbols: string;
+};
