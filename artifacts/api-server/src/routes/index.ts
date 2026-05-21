@@ -6,6 +6,7 @@ import portfolioRouter from "./portfolio";
 import marketRouter from "./market";
 import alertsRouter from "./alerts";
 import subscriptionRouter from "./subscription";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(portfolioRouter);
 router.use(marketRouter);
 router.use(alertsRouter);
 router.use(subscriptionRouter);
+router.use(chatRouter);
 
 export default router;

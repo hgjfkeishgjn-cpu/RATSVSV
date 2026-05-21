@@ -9,7 +9,8 @@ import {
   Bell, 
   CreditCard,
   LogOut,
-  Menu
+  Menu,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/signals", label: "Signals", icon: Activity },
+  { href: "/chat", label: "AI Analyst", icon: Bot, highlight: true },
   { href: "/watchlist", label: "Watchlist", icon: LineChart },
   { href: "/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/market", label: "Market", icon: Globe },
@@ -48,20 +50,30 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
         <nav className="space-y-1 px-2">
           {navItems.map((item) => {
             const isActive = location === item.href;
+            const isHighlight = (item as { highlight?: boolean }).highlight;
             return (
               <Link 
                 key={item.href} 
                 href={item.href}
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  isActive
+                    ? isHighlight
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/30"
+                      : "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : isHighlight
+                      ? "text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-400 border border-transparent hover:border-emerald-500/20"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 }`}
-                data-testid={`nav-${item.label.toLowerCase()}`}
+                data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {isHighlight && !isActive && (
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    AI
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -17,6 +17,7 @@ import Portfolio from "@/pages/Portfolio";
 import Market from "@/pages/Market";
 import Alerts from "@/pages/Alerts";
 import Pricing from "@/pages/Pricing";
+import Chat from "@/pages/Chat";
 import Layout from "@/components/Layout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -176,6 +177,7 @@ function ClerkProviderWithRoutes() {
                 <Switch>
                   <Route path="/dashboard" component={Dashboard} />
                   <Route path="/signals" component={Signals} />
+                  <Route path="/chat" component={Chat} />
                   <Route path="/watchlist" component={Watchlist} />
                   <Route path="/portfolio" component={Portfolio} />
                   <Route path="/market" component={Market} />
