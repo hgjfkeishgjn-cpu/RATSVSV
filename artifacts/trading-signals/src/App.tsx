@@ -154,14 +154,14 @@ function ClerkProviderWithRoutes() {
       localization={{
         signIn: {
           start: {
-            title: "AlphaSignal Terminal",
-            subtitle: "Sign in to access your terminal",
+            title: "EDGE AI Terminal",
+            subtitle: "Sign in to access institutional intelligence",
           },
         },
         signUp: {
           start: {
-            title: "Join AlphaSignal",
-            subtitle: "Get access to precision trading intelligence",
+            title: "Join EDGE AI",
+            subtitle: "Get access to institutional intelligence",
           },
         },
       }}

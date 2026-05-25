@@ -48,8 +48,14 @@ function Sidebar({ mobile, onClose }: { mobile?: boolean; onClose?: () => void }
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="flex h-14 items-center px-4 border-b border-sidebar-border">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg" onClick={onClose}>
-          <Activity className="h-6 w-6 text-primary" />
-          <span>AlphaSignal</span>
+          <div className="relative flex items-center justify-center h-7 w-7">
+            <div className="absolute inset-0 rounded bg-emerald-500/20 animate-pulse" />
+            <Activity className="h-5 w-5 text-emerald-400 relative z-10" />
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="text-base font-black tracking-tight text-foreground">EDGE AI</span>
+            <span className="text-[9px] font-semibold tracking-widest text-emerald-400/80 uppercase">Institutional Intelligence.</span>
+          </div>
         </Link>
       </div>
 
@@ -150,8 +156,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="flex items-center gap-2 font-bold">
-            <Activity className="h-5 w-5 text-primary" />
-            <span>AlphaSignal</span>
+            <div className="relative flex items-center justify-center h-6 w-6">
+              <div className="absolute inset-0 rounded bg-emerald-500/20" />
+              <Activity className="h-4 w-4 text-emerald-400 relative z-10" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-sm font-black tracking-tight">EDGE AI</span>
+              <span className="text-[8px] font-semibold tracking-widest text-emerald-400/80 uppercase">Institutional Intelligence.</span>
+            </div>
           </div>
         </header>
 
