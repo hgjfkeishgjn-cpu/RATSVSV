@@ -175,3 +175,19 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Ticker tape scroll animation */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-scroll {
+  display: flex;
+  width: max-content;
+  animation: ticker 40s linear infinite;
+}
+
+.ticker-scroll:hover {
+  animation-play-state: paused;
+}

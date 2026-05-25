@@ -7,6 +7,8 @@ import marketRouter from "./market";
 import alertsRouter from "./alerts";
 import subscriptionRouter from "./subscription";
 import chatRouter from "./chat";
+import chartsRouter from "./charts";
+import newsRouter from "./news";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(marketRouter);
 router.use(alertsRouter);
 router.use(subscriptionRouter);
 router.use(chatRouter);
+router.use(chartsRouter);
+router.use(newsRouter);
 
 export default router;

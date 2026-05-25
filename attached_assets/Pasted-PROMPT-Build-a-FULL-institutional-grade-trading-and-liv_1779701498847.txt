@@ -1,0 +1,269 @@
+PROMPT
+
+Build a FULL institutional-grade trading and live market analysis platform called Quantum Flow Markets using ONLY FREE public data sources and simulated real-time engines.
+
+DO NOT REQUIRE ANY PAID API.
+DO NOT REQUIRE ANY API KEYS.
+EVERYTHING must work out-of-the-box on Replit for FREE.
+
+STACK:
+
+Next.js
+TypeScript
+TailwindCSS
+Node.js
+TradingView Lightweight Charts
+WebSockets / simulated streaming engine
+Local JSON storage or SQLite
+Deployable on Replit
+
+STYLE:
+Create an ultra-premium funded trader dashboard inspired by:
+
+FTMO
+Bloomberg Terminal
+TradingView
+LuxAlgo
+Smart Money Concepts tools
+Institutional hedge fund software
+
+Use:
+
+Dark mode
+Glassmorphism
+Neon glow
+Animated widgets
+Flashing live prices
+Smooth transitions
+Floating trading panels
+Professional fintech UI
+Real-time feeling
+
+The app MUST look REAL and HIGH-END.
+
+FREE MARKET DATA SOURCES ONLY
+
+Use ONLY FREE public endpoints or scraping:
+
+CRYPTO:
+
+Binance public endpoints
+Bybit public endpoints
+CoinGecko free endpoints
+
+FOREX + GOLD:
+
+Yahoo Finance unofficial endpoints
+Stooq public data
+Free TradingView embeds
+Simulated websocket updates
+
+NEWS:
+
+RSS feeds
+ForexFactory scraping
+Investing.com public RSS
+CryptoPanic free feeds
+
+NO API KEYS.
+NO PREMIUM SERVICES.
+
+If real live data fails:
+
+Automatically fallback to ultra-realistic simulated market data.
+Simulate tick movement every second.
+Simulate spread changes.
+Simulate volatility spikes.
+Simulate candle movement.
+
+The app should ALWAYS feel LIVE.
+
+MAIN FEATURES
+LIVE MARKET DASHBOARD
+
+Create live dashboards for:
+
+XAU/USD
+BTC/USD
+ETH/USD
+EUR/USD
+GBP/USD
+NAS100
+US30
+
+Show:
+
+Live prices
+Spread
+Trend
+Volatility
+ATR
+Market session
+Momentum
+Buy/Sell pressure
+Liquidity zones
+Break of structure
+Market structure shifts
+Order blocks
+Fair value gaps
+Session highs/lows
+AI SIGNAL ENGINE
+
+Generate signals using:
+
+RSI
+MACD
+EMA
+Volume
+Momentum
+Liquidity sweeps
+Smart money concepts
+Trend structure
+
+Display:
+
+BUY / SELL
+Entry
+Stop loss
+Take profit
+Confidence %
+Risk reward ratio
+
+Generate fake AI reasoning text like:
+“Bullish liquidity sweep detected above Asian session low with strong momentum confirmation.”
+
+CHART SYSTEM
+
+Use TradingView Lightweight Charts.
+
+Include:
+
+Candlestick charts
+Multi timeframe
+Auto trendlines
+EMA overlays
+RSI
+MACD
+Liquidity zones
+Order block zones
+FVG zones
+Animated candles
+Real-time updates
+PROP FIRM DASHBOARD
+
+Create:
+
+Equity curve
+Drawdown tracker
+Daily loss limit
+Profit target
+Win rate
+Trade history
+Risk calculator
+Position size calculator
+Trading journal
+MARKET HEATMAP
+
+Create:
+
+Forex strength meter
+Crypto heatmap
+Live ticker tape
+Correlation matrix
+Fear & greed gauge
+NEWS PANEL
+
+Create:
+
+Economic calendar
+High impact news
+Market sentiment
+Crypto news
+Gold news
+Forex news
+
+Use free RSS feeds only.
+
+AI ASSISTANT
+
+Add a fake institutional AI assistant panel that:
+
+Explains signals
+Explains market structure
+Gives trade bias
+Gives risk analysis
+Gives trend explanation
+
+No external AI API needed.
+Use prebuilt logic templates.
+
+LIVE EFFECTS
+
+The platform MUST FEEL LIVE:
+
+Price blinking
+Candle movement
+Live ticker tape
+Auto-updating widgets
+Pulsing buy/sell buttons
+Streaming effect
+News auto-refresh
+Animated session timers
+LANDING PAGE
+
+Create:
+
+Hero section
+Live animated background
+Floating market widgets
+Feature cards
+Testimonials
+Pricing cards
+CTA sections
+AUTH SYSTEM
+
+Use local authentication only:
+
+Email/password
+Local storage session
+No paid auth provider
+IMPORTANT
+
+The platform MUST:
+
+Look like a real hedge fund terminal
+Never look basic
+Never expose that data is simulated
+Use realistic fake/live hybrid data
+Have loading skeletons
+Have clean architecture
+Use reusable components
+Be mobile responsive
+Be production quality
+BONUS FEATURES
+
+Add:
+
+Session clocks
+Whale tracker
+Smart money tracker
+Trading psychology quotes
+Liquidity sweep alerts
+Market scanner
+Volume spike detector
+Auto-generated trading bias
+FINAL OUTPUT
+
+Generate:
+
+Complete project
+All pages
+Components
+Backend
+Folder structure
+Styling
+Fake live engine
+Realtime simulation engine
+Deployment instructions
+
+The final app should feel like a $250/month elite funded trader platform.
