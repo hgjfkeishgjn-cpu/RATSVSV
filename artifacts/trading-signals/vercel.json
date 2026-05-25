@@ -1,8 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/npm/@clerk/:path*",
-      "destination": "https://cdn.jsdelivr.net/npm/@clerk/:path*"
-    }
-  ]
+  "buildCommand": "echo 'Build skipped'",
+  "outputDirectory": "dist"
 }

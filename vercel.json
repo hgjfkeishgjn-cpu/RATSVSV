@@ -1,5 +1,0 @@
-{
-  "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "cd artifacts/trading-signals && pnpm run build",
-  "outputDirectory": "artifacts/trading-signals/dist"
-}

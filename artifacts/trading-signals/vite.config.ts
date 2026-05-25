@@ -3,36 +3,38 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-// Define the absolute path to the directory containing this config file
-const __dirname = import.meta.dirname;
-
 export default defineConfig({
-  base: "/",
   plugins: [
     react(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      // Standard app path aliases
-      "@": path.resolve(__dirname, "src"),
-      "@assets": path.resolve(__dirname, "..", "..", "attached_assets"),
+      // Standard path
+      "@": path.resolve(import.meta.dirname, "src"),
       
-      // Monorepo alias: ensures Vite looks at the correct folder for your API client
-      // Adjust the "../api-client-react/src" if your folder structure differs
-      "@workspace/api-client-react": path.resolve(__dirname, "../api-client-react/src"),
+      // Monorepo library path
+      "@workspace/api-client-react": "/workspaces/RATSVSV/lib/api-client-react/src",
     },
-    dedupe: ["react", "react-dom"],
   },
-  // Ensure the root points to the current directory inside the artifacts folder
-  root: __dirname, 
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      // These are the packages that your library is importing but your app is failing to bundle.
+      // This 'external' setting tells the builder to stop trying to compile them and just trust 
+      // they exist in your node_modules.
+      external: [
+        "@tanstack/react-query",
+        "zod",
+        "axios",
+        "react-hook-form",
+        "framer-motion"
+      ],
+    },
   },
   server: {
-    port: Number(process.env.PORT) || 3000,
-    strictPort: true,
+    port: 3000,
     host: "0.0.0.0",
   },
 });
