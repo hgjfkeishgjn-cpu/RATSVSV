@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "echo 'Build skipped successfully'",
+   "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -74,5 +74,11 @@
     "@vitejs/plugin-react": "^4.3.0",
     "typescript": "^5.0.0",
     "vite": "^5.4.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "18.3.12",
+      "@types/react-dom": "18.3.1"
+    }
   }
 }

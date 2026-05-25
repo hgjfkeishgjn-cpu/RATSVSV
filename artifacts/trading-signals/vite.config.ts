@@ -5,33 +5,21 @@ import path from "path";
 
 export default defineConfig({
   plugins: [
-    react(),
-    tailwindcss(),
+    react(), 
+    tailwindcss()
   ],
+  base: './',
   resolve: {
     alias: {
-      // Standard path
       "@": path.resolve(import.meta.dirname, "src"),
-      
-      // Monorepo library path
       "@workspace/api-client-react": "/workspaces/RATSVSV/lib/api-client-react/src",
     },
   },
   build: {
     outDir: "dist",
     emptyOutDir: true,
-    rollupOptions: {
-      // These are the packages that your library is importing but your app is failing to bundle.
-      // This 'external' setting tells the builder to stop trying to compile them and just trust 
-      // they exist in your node_modules.
-      external: [
-        "@tanstack/react-query",
-        "zod",
-        "axios",
-        "react-hook-form",
-        "framer-motion"
-      ],
-    },
+    // Removed 'rollupOptions' entirely. 
+    // Let Vite bundle your dependencies properly so they work in the browser.
   },
   server: {
     port: 3000,
