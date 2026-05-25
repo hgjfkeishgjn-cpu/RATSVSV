@@ -3,15 +3,11 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-// Simplified environment variables with defaults
-const port = Number(process.env.PORT) || 3000;
-const basePath = process.env.BASE_PATH || "/";
-
 export default defineConfig({
-  base: basePath,
+  base: "/",
   plugins: [
     react(),
-    tailwindcss({ optimize: false }),
+    tailwindcss(),
   ],
   resolve: {
     alias: {
@@ -26,9 +22,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port,
+    port: Number(process.env.PORT) || 3000,
     strictPort: true,
     host: "0.0.0.0",
-    allowedHosts: true,
   },
 });
