@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/npm/@clerk/(.*)",
-      "destination": "https://cdn.jsdelivr.net/npm/@clerk/$1"
+      "source": "/npm/@clerk/:path*",
+      "destination": "https://cdn.jsdelivr.net/npm/@clerk/:path*"
     }
   ]
 }
