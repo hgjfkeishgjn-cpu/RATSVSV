@@ -8,8 +8,9 @@ import {
   GetSignalParams,
   GetRecentActivityQueryParams,
 } from "@workspace/api-zod";
-import { generateTradingSignal, getSimulatedPrice } from "../lib/anthropic";
-import { getSimulatedPrice as getPrice } from "../lib/marketData";
+import { generateTradingSignal } from "../lib/anthropic";
+import { getMultiTimeframeAnalysis } from "../lib/technicalAnalysis";
+import { getLivePrices, getSimulatedPrice } from "../lib/marketData";
 
 const router = Router();
 
@@ -38,28 +39,53 @@ router.post("/signals", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { symbol, timeframe, assetClass } = parsed.data;
-  const marketData = getPrice(symbol);
-  const aiSignal = await generateTradingSignal({
-    symbol,
-    timeframe,
-    assetClass: assetClass ?? "crypto",
-    simulatedPrice: marketData.price,
-    simulatedChange: marketData.changePercent24h,
-    simulatedVolume: marketData.volume24h,
-  });
+  const { symbol, assetClass } = parsed.data;
+  const ac = assetClass ?? "crypto";
+
+  // Always store as 5m (entry timeframe) — analysis uses 1h context internally
+  const storeTimeframe = "5m";
+
+  // Attempt real multi-timeframe technical analysis
+  let analysis = await getMultiTimeframeAnalysis(symbol, ac);
+
+  // Fallback: build a minimal analysis from live price if candle fetch fails
+  if (!analysis) {
+    const [live] = await getLivePrices([symbol]).catch(() => [null]);
+    const price = live?.price ?? getSimulatedPrice(symbol).price;
+    // Create stub indicators from price alone
+    const stub = {
+      rsi14: 50, ema9: price, ema21: price, ema50: price,
+      macd: 0, macdSignal: 0, macdHistogram: 0,
+      atr14: price * 0.015, // 1.5% ATR fallback
+      bbUpper: price * 1.02, bbMiddle: price, bbLower: price * 0.98,
+      support: price * 0.97, resistance: price * 1.03,
+      trend: "SIDEWAYS" as const, momentum: "NEUTRAL" as const,
+      lastClose: price,
+    };
+    analysis = {
+      symbol: symbol.toUpperCase(),
+      currentPrice: price,
+      indicators1h: stub,
+      indicators5m: stub,
+      candles1h: [],
+    };
+  }
+
+  const aiSignal = await generateTradingSignal(analysis, ac);
+
   const [signal] = await db.insert(signalsTable).values({
     symbol: symbol.toUpperCase(),
     action: aiSignal.action,
     confidence: aiSignal.confidence,
     reasoning: aiSignal.reasoning,
-    timeframe: timeframe as "1m" | "5m" | "15m" | "1h" | "4h" | "1d",
+    timeframe: storeTimeframe,
     entryPrice: aiSignal.entryPrice,
     targetPrice: aiSignal.targetPrice,
     stopLoss: aiSignal.stopLoss,
     riskRewardRatio: aiSignal.riskRewardRatio,
-    assetClass: (assetClass ?? "crypto") as "crypto" | "stocks" | "forex" | "commodities",
+    assetClass: ac as "crypto" | "stocks" | "forex" | "commodities",
   }).returning();
+
   res.status(201).json(signal);
 });
 
