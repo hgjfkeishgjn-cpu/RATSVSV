@@ -23,13 +23,41 @@ function simulatedPrice(symbol: string) {
   };
 }
 
-// ── CoinGecko ────────────────────────────────────────────────────────────────
+// ── Real-price cache (refresh every 30s, micro-tick on every request) ─────────
+interface CachedEntry {
+  price: number;
+  change24h: number;
+  changePercent24h: number;
+  volume24h: number;
+  high24h: number;
+  low24h: number;
+  fetchedAt: number;
+}
+
+const priceCache = new Map<string, CachedEntry>();
+const CACHE_TTL_MS = 30_000; // refresh real APIs every 30 s
+
+// Micro-fluctuation: ±0.12% per tick, anchored to cached real price
+function applyTick(entry: CachedEntry, symbol: string): CachedEntry {
+  const isForex = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD"].includes(symbol);
+  const isIndex = ["NASDAQ", "SP500", "DOW"].includes(symbol);
+  const tickMagnitude = isForex ? 0.0003 : isIndex ? 0.0006 : 0.0012;
+  const tick = (Math.random() - 0.48) * tickMagnitude;
+  const newPrice = entry.price * (1 + tick);
+  const decimals = newPrice < 1 ? 6 : newPrice < 10 ? 4 : isForex ? 4 : 2;
+  return {
+    ...entry,
+    price: parseFloat(newPrice.toFixed(decimals)),
+  };
+}
+
+// ── CoinGecko ─────────────────────────────────────────────────────────────────
 const COINGECKO_IDS: Record<string, string> = {
   BTC: "bitcoin", ETH: "ethereum", SOL: "solana",
   BNB: "binancecoin", XRP: "ripple", AVAX: "avalanche-2",
 };
 
-async function fetchCoinGecko(symbols: string[]): Promise<Map<string, ReturnType<typeof simulatedPrice>>> {
+async function fetchCoinGecko(symbols: string[]): Promise<Map<string, CachedEntry>> {
   const ids = symbols.map(s => COINGECKO_IDS[s]).filter(Boolean);
   if (!ids.length) return new Map();
 
@@ -43,7 +71,8 @@ async function fetchCoinGecko(symbols: string[]): Promise<Map<string, ReturnType
     usd: number; usd_24h_change: number; usd_24h_vol: number;
   }>;
 
-  const map = new Map<string, ReturnType<typeof simulatedPrice>>();
+  const map = new Map<string, CachedEntry>();
+  const now = Date.now();
   for (const sym of symbols) {
     const id = COINGECKO_IDS[sym];
     const d = id ? data[id] : undefined;
@@ -57,12 +86,13 @@ async function fetchCoinGecko(symbols: string[]): Promise<Map<string, ReturnType
       volume24h: Math.round(d.usd_24h_vol ?? 0),
       high24h: parseFloat((price * 1.015).toFixed(2)),
       low24h: parseFloat((price * 0.985).toFixed(2)),
+      fetchedAt: now,
     });
   }
   return map;
 }
 
-// ── Open Exchange Rates (free, no key) ───────────────────────────────────────
+// ── Open Exchange Rates ───────────────────────────────────────────────────────
 const FOREX_PAIRS: Record<string, { base: string; quote: string }> = {
   EURUSD: { base: "EUR", quote: "USD" },
   GBPUSD: { base: "GBP", quote: "USD" },
@@ -71,8 +101,8 @@ const FOREX_PAIRS: Record<string, { base: string; quote: string }> = {
   USDCAD: { base: "USD", quote: "CAD" },
 };
 
-async function fetchForex(symbols: string[]): Promise<Map<string, ReturnType<typeof simulatedPrice>>> {
-  const map = new Map<string, ReturnType<typeof simulatedPrice>>();
+async function fetchForex(symbols: string[]): Promise<Map<string, CachedEntry>> {
+  const map = new Map<string, CachedEntry>();
   const forexSymbols = symbols.filter(s => FOREX_PAIRS[s]);
   if (!forexSymbols.length) return map;
 
@@ -83,6 +113,7 @@ async function fetchForex(symbols: string[]): Promise<Map<string, ReturnType<typ
   if (!res.ok) throw new Error(`Open ER API ${res.status}`);
   const data = await res.json() as { rates: Record<string, number> };
   const rates = data.rates;
+  const now = Date.now();
 
   for (const sym of forexSymbols) {
     const pair = FOREX_PAIRS[sym];
@@ -104,12 +135,13 @@ async function fetchForex(symbols: string[]): Promise<Map<string, ReturnType<typ
       volume24h: 0,
       high24h: parseFloat((rate * 1.003).toFixed(4)),
       low24h: parseFloat((rate * 0.997).toFixed(4)),
+      fetchedAt: now,
     });
   }
   return map;
 }
 
-// ── Yahoo Finance chart (single-symbol, often no auth needed) ─────────────────
+// ── Yahoo Finance chart ───────────────────────────────────────────────────────
 const YAHOO_CHART_MAP: Record<string, string> = {
   GOLD: "GC%3DF", XAU: "GC%3DF", SILVER: "SI%3DF",
   OIL: "CL%3DF", NATGAS: "NG%3DF",
@@ -117,7 +149,7 @@ const YAHOO_CHART_MAP: Record<string, string> = {
   AAPL: "AAPL", NVDA: "NVDA", TSLA: "TSLA", MSFT: "MSFT", GOOGL: "GOOGL",
 };
 
-async function fetchYahooChart(symbol: string): Promise<ReturnType<typeof simulatedPrice> | null> {
+async function fetchYahooChart(symbol: string): Promise<CachedEntry | null> {
   const yTicker = YAHOO_CHART_MAP[symbol];
   if (!yTicker) return null;
 
@@ -163,6 +195,7 @@ async function fetchYahooChart(symbol: string): Promise<ReturnType<typeof simula
     volume24h: meta?.regularMarketVolume ?? 0,
     high24h: parseFloat(high.toFixed(2)),
     low24h: parseFloat(low.toFixed(2)),
+    fetchedAt: Date.now(),
   };
 }
 
@@ -172,37 +205,63 @@ export async function getLivePrices(symbols: string[]): Promise<Array<{
   changePercent24h: number; volume24h: number; high24h: number; low24h: number;
 }>> {
   const uppers = symbols.map(s => s.toUpperCase());
+  const now = Date.now();
 
-  const cryptoSymbols = uppers.filter(s => COINGECKO_IDS[s]);
-  const forexSymbols  = uppers.filter(s => FOREX_PAIRS[s]);
-  const chartSymbols  = uppers.filter(s => YAHOO_CHART_MAP[s]);
+  // Determine which symbols need a fresh real fetch
+  const staleSymbols = uppers.filter(s => {
+    const cached = priceCache.get(s);
+    return !cached || now - cached.fetchedAt > CACHE_TTL_MS;
+  });
 
-  const [cryptoMap, forexMap] = await Promise.all([
-    cryptoSymbols.length
-      ? fetchCoinGecko(cryptoSymbols).catch(err => {
-          logger.warn({ err }, "CoinGecko fetch failed");
-          return new Map<string, ReturnType<typeof simulatedPrice>>();
-        })
-      : Promise.resolve(new Map<string, ReturnType<typeof simulatedPrice>>()),
-    forexSymbols.length
-      ? fetchForex(forexSymbols).catch(err => {
-          logger.warn({ err }, "Forex fetch failed");
-          return new Map<string, ReturnType<typeof simulatedPrice>>();
-        })
-      : Promise.resolve(new Map<string, ReturnType<typeof simulatedPrice>>()),
-  ]);
+  if (staleSymbols.length > 0) {
+    const cryptoSymbols = staleSymbols.filter(s => COINGECKO_IDS[s]);
+    const forexSymbols  = staleSymbols.filter(s => FOREX_PAIRS[s]);
+    const chartSymbols  = staleSymbols.filter(s => YAHOO_CHART_MAP[s]);
 
-  const chartResults = await Promise.all(
-    chartSymbols.map(async sym => {
-      const result = await fetchYahooChart(sym).catch(() => null);
-      return [sym, result] as const;
-    })
-  );
-  const chartMap = new Map(chartResults.filter(([, v]) => v !== null) as [string, ReturnType<typeof simulatedPrice>][]);
+    const [cryptoMap, forexMap] = await Promise.all([
+      cryptoSymbols.length
+        ? fetchCoinGecko(cryptoSymbols).catch(err => {
+            logger.warn({ err }, "CoinGecko fetch failed");
+            return new Map<string, CachedEntry>();
+          })
+        : Promise.resolve(new Map<string, CachedEntry>()),
+      forexSymbols.length
+        ? fetchForex(forexSymbols).catch(err => {
+            logger.warn({ err }, "Forex fetch failed");
+            return new Map<string, CachedEntry>();
+          })
+        : Promise.resolve(new Map<string, CachedEntry>()),
+    ]);
 
+    const chartResults = await Promise.all(
+      chartSymbols.map(async sym => {
+        const result = await fetchYahooChart(sym).catch(() => null);
+        return [sym, result] as const;
+      })
+    );
+    const chartMap = new Map(chartResults.filter(([, v]) => v !== null) as [string, CachedEntry][]);
+
+    // Populate cache with fresh real data
+    for (const sym of staleSymbols) {
+      const fresh = cryptoMap.get(sym) ?? forexMap.get(sym) ?? chartMap.get(sym);
+      if (fresh) {
+        priceCache.set(sym, fresh);
+      } else if (!priceCache.has(sym)) {
+        // Seed with simulated if no real data at all
+        const sim = simulatedPrice(sym);
+        priceCache.set(sym, { ...sim, fetchedAt: now - CACHE_TTL_MS + 5000 });
+      }
+    }
+  }
+
+  // Apply micro-tick to every symbol for this request
   return uppers.map(symbol => {
-    const data = cryptoMap.get(symbol) ?? forexMap.get(symbol) ?? chartMap.get(symbol) ?? simulatedPrice(symbol);
-    return { symbol, ...data };
+    const cached = priceCache.get(symbol);
+    if (cached) {
+      const ticked = applyTick(cached, symbol);
+      return { symbol, ...ticked };
+    }
+    return { symbol, ...simulatedPrice(symbol) };
   });
 }
 

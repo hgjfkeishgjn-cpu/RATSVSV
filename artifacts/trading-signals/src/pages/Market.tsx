@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Activity, Globe } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useRef, useState } from "react";
 
 const SYMBOL_META: Record<string, { label: string; prefix: string; decimals: number }> = {
   BTC:    { label: "Bitcoin",       prefix: "$",  decimals: 2 },
@@ -34,10 +35,84 @@ function formatPrice(symbol: string, price: number) {
 
 const MARKET_SYMBOLS = "BTC,GOLD,NASDAQ,EURUSD,GBPUSD,USDJPY,ETH,SOL";
 
+type FlashState = "up" | "down" | null;
+
+function usePriceFlash(price: number | undefined): FlashState {
+  const prevRef = useRef<number | undefined>(undefined);
+  const [flash, setFlash] = useState<FlashState>(null);
+
+  useEffect(() => {
+    if (price === undefined) return;
+    if (prevRef.current !== undefined && price !== prevRef.current) {
+      const dir = price > prevRef.current ? "up" : "down";
+      setFlash(dir);
+      const t = setTimeout(() => setFlash(null), 600);
+      prevRef.current = price;
+      return () => clearTimeout(t);
+    }
+    prevRef.current = price;
+  }, [price]);
+
+  return flash;
+}
+
+function PriceCard({ symbol, price, changePercent24h }: {
+  symbol: string;
+  price: number;
+  changePercent24h: number;
+}) {
+  const flash = usePriceFlash(price);
+  const isPositive = changePercent24h >= 0;
+  const meta = SYMBOL_META[symbol];
+
+  return (
+    <Card
+      className={`border-border bg-card/50 hover:bg-card transition-colors overflow-hidden`}
+    >
+      <CardContent className="p-4 relative">
+        {/* Flash overlay */}
+        {flash && (
+          <span
+            className={`absolute inset-0 pointer-events-none rounded-lg transition-opacity duration-300 ${
+              flash === "up" ? "bg-emerald-500/15" : "bg-rose-500/15"
+            }`}
+          />
+        )}
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
+              {meta?.label ?? symbol}
+            </div>
+            <div className="text-sm font-bold mt-0.5">{symbol}</div>
+          </div>
+          {isPositive
+            ? <TrendingUp className="h-4 w-4 text-emerald-500 mt-1" />
+            : <TrendingDown className="h-4 w-4 text-rose-500 mt-1" />}
+        </div>
+        <div
+          className={`text-2xl font-mono tracking-tight mt-2 transition-colors duration-150 ${
+            flash === "up"
+              ? "text-emerald-400"
+              : flash === "down"
+              ? "text-rose-400"
+              : ""
+          }`}
+        >
+          {formatPrice(symbol, price)}
+        </div>
+        <div className={`text-sm font-medium mt-1 font-mono ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
+          {isPositive ? "+" : ""}{changePercent24h.toFixed(2)}%
+          <span className="text-muted-foreground ml-1 text-xs">24h</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Market() {
   const { data: prices, isLoading: loadingPrices } = useGetMarketPrices(
     { symbols: MARKET_SYMBOLS },
-    { query: { refetchInterval: 30000 } }
+    { query: { refetchInterval: 5000 } }
   );
 
   const { data: trending, isLoading: loadingTrending } = useGetTrendingAssets(
@@ -63,7 +138,7 @@ export default function Market() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          Live data — updates every 30s
+          Live data — ticking every 5s
         </p>
       </div>
 
@@ -78,34 +153,14 @@ export default function Market() {
                 </CardContent>
               </Card>
             ))
-          : prices?.map((price) => {
-              const isPositive = price.changePercent24h >= 0;
-              const meta = SYMBOL_META[price.symbol];
-              return (
-                <Card key={price.symbol} className="border-border bg-card/50 hover:bg-card transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-                          {meta?.label ?? price.symbol}
-                        </div>
-                        <div className="text-sm font-bold mt-0.5">{price.symbol}</div>
-                      </div>
-                      {isPositive
-                        ? <TrendingUp className="h-4 w-4 text-emerald-500 mt-1" />
-                        : <TrendingDown className="h-4 w-4 text-rose-500 mt-1" />}
-                    </div>
-                    <div className="text-2xl font-mono tracking-tight mt-2">
-                      {formatPrice(price.symbol, price.price)}
-                    </div>
-                    <div className={`text-sm font-medium mt-1 font-mono ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
-                      {isPositive ? "+" : ""}{price.changePercent24h.toFixed(2)}%
-                      <span className="text-muted-foreground ml-1 text-xs">24h</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          : prices?.map((price) => (
+              <PriceCard
+                key={price.symbol}
+                symbol={price.symbol}
+                price={price.price}
+                changePercent24h={price.changePercent24h}
+              />
+            ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
